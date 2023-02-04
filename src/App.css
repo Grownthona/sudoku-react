@@ -1,6 +1,42 @@
+body{
+  background-color: #121212;
+}
+
+table {
+  border: 12px solid #121212;
+}
+
+tr, td {
+  border: 4px solid #121212;
+}
+td {
+  padding: 0;
+  margin: 0;
+  height: 40px;
+  width: 40px;
+  text-align: center;
+  vertical-align: center;
+  outline: none;
+}
+
+.wrapper {
+  border-radius: 7px;
+  color:  #cfb179;
+  background-color: #9003fc;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  height: 40px;
+  width: 40px;
+  text-align: center;
+  font-size: 24px;
+  width: 100%;
+}
+
 .App {
   text-align: center;
 }
+
 
 .App-logo {
   height: 40vmin;
@@ -37,6 +73,36 @@
   }
 }
 
+.matrix {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+.matrix-cell {
+  width: 50px;
+  height: 50px;
+  color: #000000;
+  
+  background-color: rgb(240, 187, 235);
+  border: 3px solid rgb(29, 29, 29);
+  font-size: 16px;
+  font-weight: bold;
+}
+.tab{
+  display:flex ;
+  justify-content: center;
+  
+}
+
+td:nth-child(3n) {
+  border-right: 10px solid #121212;
+}
+
+tr:nth-child(3n) {
+  border-bottom: 10px solid #121212;
+}
 .button-52 {
   font-size: 16px;
   font-weight: 200;

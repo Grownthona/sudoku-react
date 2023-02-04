@@ -31,8 +31,23 @@ const generateSudokuMatrix = (numZeros) => {
   };
 
   return (
-    <div className='App'>
-      <button className="button-52" onClick={generateMatrix}>Generate Matrix</button>
+   <div>
+    <button className="button-52" onClick={generateMatrix}>Generate Matrix</button>
+   <div className="matrix">
+      <table>
+                <tbody>
+                    {matrix.map((row, i) =>(
+                        <tr key = {i}>
+                            {row.map((col, j) => (
+                                <td key = {j} className="matrix-cell wrapper">
+                                     {col===0 ? "" : col}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+    </div>
     </div>
   );
 };
