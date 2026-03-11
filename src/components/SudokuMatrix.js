@@ -1,220 +1,431 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
-const generateSudokuMatrix = (numZeros) => {
-  
-   const matrix = [
-    [
-      [2, 9, 5, 7, 4, 3, 8, 6, 1],
-      [4, 3, 1, 8, 6, 5, 9, 2, 7],
-      [8, 7, 6, 1, 9, 2, 5, 4, 3],
-      [3, 8, 7, 4, 5, 9, 2, 1, 6],
-      [6, 1, 2, 3, 8, 7, 4, 9, 5],
-      [5, 4, 9, 2, 1, 6, 7, 3, 8],
-      [7, 6, 3, 5, 2, 4, 1, 8, 9],
-      [9, 2, 8, 6, 7, 1, 3, 5, 4],
-      [1, 5, 4, 9, 3, 8, 6, 7, 2]
-    ],
-    [
-      [5, 3, 4, 6, 7, 8, 9, 1, 2],
-      [6, 7, 2, 1, 9, 5, 3, 4, 8],
-      [1, 9, 8, 3, 4, 2, 5, 6, 7],
-      [8, 5, 9, 7, 6, 1, 4, 2, 3],
-      [4, 2, 6, 8, 5, 3, 7, 9, 1],
-      [7, 1, 3, 9, 2, 4, 8, 5, 6],
-      [9, 6, 1, 5, 3, 7, 2, 8, 4],
-      [2, 8, 7, 4, 1, 9, 6, 3, 5],
-      [3, 4, 5, 2, 8, 6, 1, 7, 9]
-    ],
-    [
-      [ 3, 1, 6, 5, 7, 8, 4, 9, 2 ],
-      [ 5, 2, 9, 1, 3, 4, 7, 6, 8 ],
-      [ 4, 8, 7, 6, 2, 9, 5, 3, 1 ],
-      [ 2, 6, 3, 0, 1, 5, 9, 8, 7 ],
-      [ 9, 7, 4, 8, 6, 0, 1, 2, 5 ],
-      [ 8, 5, 1, 7, 9, 2, 6, 4, 3 ],
-      [ 1, 3, 8, 0, 4, 7, 2, 0, 6 ],
-      [ 6, 9, 2, 3, 5, 1, 8, 7, 4 ],
-      [ 7, 4, 5, 0, 8, 6, 3, 1, 0 ]
-    ]];
-
-    let SudokuMatrix = matrix[numZeros];
-    
-  let count = 0;
-  while (count < 35) {
-    const row = Math.floor(Math.random() * 9);
-    const col = Math.floor(Math.random() * 9);
-    if (SudokuMatrix[row][col] !== 0) {
-      SudokuMatrix[row][col] = 0;
-      count++;
-    }
-  }
-  return SudokuMatrix;
+const generateSudoku = () => {
+  const base = [
+    [5,3,0,0,7,0,0,0,0],
+    [6,0,0,1,9,5,0,0,0],
+    [0,9,8,0,0,0,0,6,0],
+    [8,0,0,0,6,0,0,0,3],
+    [4,0,0,8,0,3,0,0,1],
+    [7,0,0,0,2,0,0,0,6],
+    [0,6,0,0,0,0,2,8,0],
+    [0,0,0,4,1,9,0,0,5],
+    [0,0,0,0,8,0,0,7,9],
+  ];
+  const solution = [
+    [5,3,4,6,7,8,9,1,2],
+    [6,7,2,1,9,5,3,4,8],
+    [1,9,8,3,4,2,5,6,7],
+    [8,5,9,7,6,1,4,2,3],
+    [4,2,6,8,5,3,7,9,1],
+    [7,1,3,9,2,4,8,5,6],
+    [9,6,1,5,3,7,2,8,4],
+    [2,8,7,4,1,9,6,3,5],
+    [3,4,5,2,8,6,1,7,9],
+  ];
+  return { puzzle: base, solution };
 };
 
-   /* Sudoku Solver Part */
-   
-   
-    const isSolveSafe = (r,c,arr,value) => {
+const DIFFICULTIES = {
+  Easy: 35,
+  Medium: 45,
+  Hard: 55,
+};
+
+function generateFullBoard() {
+  const board = Array(9).fill(null).map(() => Array(9).fill(0));
+  
+  function isValid(board, row, col, num) {
     for (let i = 0; i < 9; i++) {
-      if(arr[r][i]===value && i!==c){
-        return false;
-      }
-      if(arr[i][c]===value && i!==r){
-        return false;
-      }
-    }
-    let r1 = Math.floor(r / 3) * 3;
-    let c1 = Math.floor(c / 3) * 3;
-    for (let rr = r1; rr < r1 + 3; ++rr) {
-        for (let cc = c1; cc < c1 + 3; ++cc) {
-            if (arr[rr][cc] === value) return false;
-        }
+      if (board[row][i] === num) return false;
+      if (board[i][col] === num) return false;
+      const br = 3 * Math.floor(row / 3) + Math.floor(i / 3);
+      const bc = 3 * Math.floor(col / 3) + (i % 3);
+      if (board[br][bc] === num) return false;
     }
     return true;
   }
-
-  const solveSudoku = (sudokuArr) => {
-    for(let i=0;i<9;i++){
-        for(let j=0;j<9;j++){
-            if(sudokuArr[i][j]===0){
-                for(let n=1;n<=9;n++){
-                    if(isSolveSafe(i,j,sudokuArr,n)){
-                        sudokuArr[i][j] = n;
-                        if(solveSudoku(sudokuArr)){
-                            return true;
-                        }
-                        sudokuArr[i][j] = 0;
-                    }
-                }
-                return false;
-            }
-        }
-    }
-   return true;
-   }
-
   
-
-    /* Sudoku Solver Part */
-
-  const SudokuMatrix = () => {
-  const [matrix, setMatrix] = useState(generateSudokuMatrix(Math.floor(Math.random() * 9)%3));
-  const [matrixcopy, setMatrixCopy] = useState([
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0]
-  ]);
-
-  const[row,setRow] = useState(0);
-  const[col,setCol] = useState(0);
-  const[w_row,setWrongRow] = useState([]);
-  const[w_col,setWrongCol] = useState([]);
-
-  const getCellStyle = (row_color,col_color) => {
-    let color = "black";
-    
-    for(let i=0;i<w_row.length;i++)
-    {
-      if (row_color===w_row[i] && col_color===w_col[i]) {
-        color = "red";
+  function solve(board) {
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (board[row][col] === 0) {
+          const nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+          for (const num of nums) {
+            if (isValid(board, row, col, num)) {
+              board[row][col] = num;
+              if (solve(board)) return true;
+              board[row][col] = 0;
+            }
+          }
+          return false;
+        }
       }
     }
+    return true;
+  }
+  
+  solve(board);
+  return board;
+}
+
+function createPuzzle(solution, clues) {
+  const puzzle = solution.map(row => [...row]);
+  const cells = [];
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++)
+      cells.push([r, c]);
+  
+  const toRemove = cells.sort(() => Math.random() - 0.5).slice(0, 81 - clues);
+  toRemove.forEach(([r, c]) => puzzle[r][c] = 0);
+  return puzzle;
+}
+
+export default function Sudoku() {
+  const [difficulty, setDifficulty] = useState("Medium");
+  const [solution, setSolution] = useState(null);
+  const [puzzle, setPuzzle] = useState(null);
+  const [board, setBoard] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [errors, setErrors] = useState(new Set());
+  const [notes, setNotes] = useState({});
+  const [noteMode, setNoteMode] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [won, setWon] = useState(false);
+  const [mistakes, setMistakes] = useState(0);
+
+  const startGame = useCallback((diff = difficulty) => {
+    const sol = generateFullBoard();
+    const puz = createPuzzle(sol, 81 - DIFFICULTIES[diff]);
+    setSolution(sol);
+    setPuzzle(puz);
+    setBoard(puz.map(row => [...row]));
+    setSelected(null);
+    setErrors(new Set());
+    setNotes({});
+    setNoteMode(false);
+    setTimer(0);
+    setRunning(true);
+    setWon(false);
+    setMistakes(0);
+  }, [difficulty]);
+
+  useEffect(() => { startGame(); }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => setTimer(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [running]);
+
+  const formatTime = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  const isFixed = (r, c) => puzzle && puzzle[r][c] !== 0;
+
+  const handleInput = useCallback((num) => {
+    if (!selected || won) return;
+    const [r, c] = selected;
+    if (isFixed(r, c)) return;
+
+    if (noteMode && num !== 0) {
+      const key = `${r}-${c}`;
+      setNotes(prev => {
+        const cur = new Set(prev[key] || []);
+        cur.has(num) ? cur.delete(num) : cur.add(num);
+        return { ...prev, [key]: cur };
+      });
+      return;
+    }
+
+    const newBoard = board.map(row => [...row]);
+    newBoard[r][c] = num;
+    setBoard(newBoard);
+
+    // Clear notes for this cell
+    setNotes(prev => { const n = {...prev}; delete n[`${r}-${c}`]; return n; });
+
+    const newErrors = new Set(errors);
+    if (num !== 0 && solution[r][c] !== num) {
+      newErrors.add(`${r}-${c}`);
+      setMistakes(m => m + 1);
+    } else {
+      newErrors.delete(`${r}-${c}`);
+    }
+    setErrors(newErrors);
+
+    // Check win
+    const complete = newBoard.every((row, ri) => row.every((v, ci) => v === solution[ri][ci]));
+    if (complete) { setWon(true); setRunning(false); }
+  }, [selected, board, solution, puzzle, errors, noteMode, won]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (won) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9) handleInput(num);
+      if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') handleInput(0);
+      if (e.key === 'n') setNoteMode(m => !m);
+      if (!selected) return;
+      const [r, c] = selected;
+      if (e.key === 'ArrowUp' && r > 0) setSelected([r-1, c]);
+      if (e.key === 'ArrowDown' && r < 8) setSelected([r+1, c]);
+      if (e.key === 'ArrowLeft' && c > 0) setSelected([r, c-1]);
+      if (e.key === 'ArrowRight' && c < 8) setSelected([r, c+1]);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleInput, selected, won]);
+
+  const isSameBox = (r1, c1, r2, c2) =>
+    Math.floor(r1/3) === Math.floor(r2/3) && Math.floor(c1/3) === Math.floor(c2/3);
+
+  const getCellStyle = (r, c) => {
+    if (!board) return {};
+    const val = board[r][c];
+    const key = `${r}-${c}`;
+    const isErr = errors.has(key);
+    const isSel = selected && selected[0] === r && selected[1] === c;
+    const isRelated = selected && (selected[0] === r || selected[1] === c || isSameBox(r, c, selected[0], selected[1]));
+    const isSameVal = selected && val !== 0 && board[selected[0]][selected[1]] === val;
+    const fixed = isFixed(r, c);
+
+    let bg = 'transparent';
+    if (isSel) bg = '#c8a96e';
+    else if (isSameVal) bg = 'rgba(200, 169, 110, 0.35)';
+    else if (isRelated) bg = 'rgba(255,255,255,0.05)';
+
     return {
-      color: color
+      background: bg,
+      color: isErr ? '#e05c5c' : fixed ? '#f0ead8' : '#c8a96e',
+      fontWeight: fixed ? '700' : '500',
+      opacity: val === 0 && !isSel ? 0.9 : 1,
     };
   };
-  const handleClick = (i, j) => {
-    setRow(i);
-    setCol(j);
-  };
-    
-   const isSafe = (r,c,value) =>{
-    for (let i = 0; i < 9; i++) {
-      //console.log(matrix[r][i]);
-      if(matrix[r][i]===value && i!==c){
-        const rw = [...w_row];
-        const cw = [...w_col];
-        rw.push(r);
-        cw.push(c);
-        setWrongCol(cw);
-        setWrongRow(rw);
-        return false;
-      }
-      if(matrix[i][c]===value && i!==r){
-        const rw = [...w_row];
-        const cw = [...w_col];
-        rw.push(r);
-        cw.push(c);
-        setWrongCol(cw);
-        setWrongRow(rw);
-        return false;
-      }
-    }
-    let r1 = Math.floor(r / 3) * 3;
-    let c1 = Math.floor(c / 3) * 3;
-    for (let rr = r1; rr < r1 + 3; ++rr) {
-        for (let cc = c1; cc < c1 + 3; ++cc) {
-            if (matrix[rr][cc] == value){ 
-              const rw = [...w_row];
-              const cw = [...w_col];
-              rw.push(r);
-              cw.push(c);
-              setWrongCol(cw);
-              setWrongRow(rw);
-              return false;
-            }
-        }
-    }
-    const indexOfRow = w_row.indexOf(r);
-    const indexOfColumn = w_col.indexOf(c);
-    if (indexOfRow > -1 && indexOfColumn > -1) { // only splice array when item is found
-      w_row.splice(indexOfRow, 1); // 2nd parameter means remove one item only
-      w_col.splice(indexOfColumn,1);
-    }
-    return true;
-  };
 
-   function printNumber(v) {
-    const newMatrix = [...matrix];
-    newMatrix[row][col] = v;
-    setMatrix(newMatrix);
-    isSafe(row,col,v);
-  };
+  if (!board) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0f0e0b',color:'#c8a96e',fontFamily:'serif',fontSize:'1.5rem'}}>Loading…</div>;
 
   return (
-   <div>
-    <div className="matrix">
-        <table>
-              <tbody>
-                  {matrix.map((row, i) =>(
-                      <tr key = {i}>
-                          {row.map((col, j) => (
-                              <td key = {j} onClick={() => handleClick(i, j)} style={getCellStyle(i,j)} className="matrix-cell wrapper">
-                                    {col===0 ? "" : col}
-                              </td>
-                          ))}
-                      </tr>
-                  ))}
-              </tbody>
-          </table>
-       </div>
-       <button onClick={() => printNumber(1)}>1</button>
-       <button onClick={() => printNumber(2)}>2</button>
-       <button onClick={() => printNumber(3)}>3</button>
-       <button onClick={() => printNumber(4)}>4</button>
-       <button onClick={() => printNumber(5)}>5</button>
-       <button onClick={() => printNumber(6)}>6</button>
-       <button onClick={() => printNumber(7)}>7</button>
-       <button onClick={() => printNumber(8)}>8</button>
-       <button onClick={() => printNumber(9)}>9</button>
+    <div style={{
+      minHeight: '100vh',
+      background: '#0f0e0b',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Georgia', 'Times New Roman', serif",
+      padding: '20px',
+      userSelect: 'none',
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=EB+Garamond:wght@400;500&display=swap');
+        * { box-sizing: border-box; }
+        .cell-btn:hover { filter: brightness(1.15); }
+        .num-btn:hover { background: rgba(200,169,110,0.2) !important; }
+        .num-btn:active { transform: scale(0.93); }
+        .diff-btn:hover { border-color: #c8a96e !important; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ color: 'rgba(200,169,110,0.4)', fontSize: '0.7rem', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: '4px', fontFamily:"'EB Garamond', serif" }}>
+          The Daily
+        </div>
+        <h1 style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: 'clamp(2rem, 5vw, 3.2rem)',
+          fontWeight: 700,
+          color: '#f0ead8',
+          margin: 0,
+          letterSpacing: '-0.01em',
+          lineHeight: 1,
+        }}>SUDOKU</h1>
+        <div style={{ width: '100%', height: '1px', background: 'linear-gradient(to right, transparent, #c8a96e, transparent)', marginTop: '12px' }} />
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'flex', gap: '32px', marginBottom: '20px', alignItems: 'center' }}>
+        {/* Difficulty */}
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {Object.keys(DIFFICULTIES).map(d => (
+            <button key={d} className="diff-btn" onClick={() => { setDifficulty(d); startGame(d); }} style={{
+              background: difficulty === d ? 'rgba(200,169,110,0.15)' : 'transparent',
+              border: `1px solid ${difficulty === d ? '#c8a96e' : 'rgba(200,169,110,0.25)'}`,
+              color: difficulty === d ? '#c8a96e' : 'rgba(200,169,110,0.5)',
+              padding: '4px 10px',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              fontSize: '0.65rem',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              fontFamily: "'EB Garamond', serif",
+              transition: 'all 0.2s',
+            }}>{d}</button>
+          ))}
+        </div>
+
+        <div style={{ width: '1px', height: '20px', background: 'rgba(200,169,110,0.2)' }} />
+
+        <div style={{ color: '#c8a96e', fontSize: '1.1rem', fontFamily:"'Playfair Display', serif", letterSpacing: '0.1em' }}>
+          {formatTime(timer)}
+        </div>
+
+        <div style={{ width: '1px', height: '20px', background: 'rgba(200,169,110,0.2)' }} />
+
+        <div style={{ color: mistakes >= 3 ? '#e05c5c' : 'rgba(200,169,110,0.6)', fontSize: '0.7rem', letterSpacing: '0.1em', fontFamily:"'EB Garamond', serif" }}>
+          ✕ {mistakes} mistakes
+        </div>
+      </div>
+
+      {/* Win Banner */}
+      {won && (
+        <div style={{
+          background: 'rgba(200,169,110,0.12)',
+          border: '1px solid rgba(200,169,110,0.5)',
+          borderRadius: '4px',
+          padding: '12px 28px',
+          marginBottom: '16px',
+          textAlign: 'center',
+          color: '#c8a96e',
+          fontFamily: "'Playfair Display', serif",
+          fontSize: '1rem',
+          letterSpacing: '0.05em',
+        }}>
+          Puzzle Solved — {formatTime(timer)} · {mistakes} mistake{mistakes !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      {/* Board */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(9, 1fr)',
+        border: '2px solid #c8a96e',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        boxShadow: '0 0 60px rgba(200,169,110,0.08), 0 20px 60px rgba(0,0,0,0.8)',
+        width: 'min(90vw, 450px)',
+        aspectRatio: '1',
+      }}>
+        {board.map((row, r) =>
+          row.map((val, c) => {
+            const key = `${r}-${c}`;
+            const cellNotes = notes[key];
+            const style = getCellStyle(r, c);
+            const borderR = c === 2 || c === 5 ? '2px solid rgba(200,169,110,0.7)' : '1px solid rgba(200,169,110,0.15)';
+            const borderB = r === 2 || r === 5 ? '2px solid rgba(200,169,110,0.7)' : '1px solid rgba(200,169,110,0.15)';
+
+            return (
+              <button
+                key={key}
+                className="cell-btn"
+                onClick={() => setSelected([r, c])}
+                style={{
+                  ...style,
+                  border: 'none',
+                  borderRight: borderR,
+                  borderBottom: borderB,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 'clamp(0.9rem, 2.5vw, 1.3rem)',
+                  fontFamily: "'Playfair Display', serif",
+                  transition: 'background 0.1s',
+                  position: 'relative',
+                  padding: 0,
+                  aspectRatio: '1',
+                }}
+              >
+                {val !== 0 ? val : (
+                  cellNotes && cellNotes.size > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', width: '90%', height: '90%', gap: '0' }}>
+                      {[1,2,3,4,5,6,7,8,9].map(n => (
+                        <span key={n} style={{ fontSize: 'clamp(0.35rem, 0.8vw, 0.45rem)', color: 'rgba(200,169,110,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                          {cellNotes.has(n) ? n : ''}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {/* Controls */}
+      <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', width: 'min(90vw, 450px)' }}>
+        {/* Number pad */}
+        <div style={{ display: 'flex', gap: '6px', width: '100%', justifyContent: 'center' }}>
+          {[1,2,3,4,5,6,7,8,9].map(n => (
+            <button key={n} className="num-btn" onClick={() => handleInput(n)} style={{
+              flex: 1,
+              aspectRatio: '1',
+              background: 'rgba(200,169,110,0.07)',
+              border: '1px solid rgba(200,169,110,0.2)',
+              borderRadius: '3px',
+              color: '#f0ead8',
+              fontSize: 'clamp(1rem, 2.5vw, 1.4rem)',
+              fontFamily: "'Playfair Display', serif",
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{n}</button>
+          ))}
+        </div>
+
+        {/* Action row */}
+        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          <button className="num-btn" onClick={() => handleInput(0)} style={{
+            flex: 1,
+            padding: '8px',
+            background: 'rgba(200,169,110,0.07)',
+            border: '1px solid rgba(200,169,110,0.2)',
+            borderRadius: '3px',
+            color: 'rgba(200,169,110,0.7)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontFamily: "'EB Garamond', serif",
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}>Erase</button>
+
+          <button className="num-btn" onClick={() => setNoteMode(m => !m)} style={{
+            flex: 1,
+            padding: '8px',
+            background: noteMode ? 'rgba(200,169,110,0.2)' : 'rgba(200,169,110,0.07)',
+            border: `1px solid ${noteMode ? 'rgba(200,169,110,0.7)' : 'rgba(200,169,110,0.2)'}`,
+            borderRadius: '3px',
+            color: noteMode ? '#c8a96e' : 'rgba(200,169,110,0.7)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontFamily: "'EB Garamond', serif",
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}>✎ Notes {noteMode ? 'On' : 'Off'}</button>
+
+          <button className="num-btn" onClick={() => startGame()} style={{
+            flex: 1,
+            padding: '8px',
+            background: 'rgba(200,169,110,0.07)',
+            border: '1px solid rgba(200,169,110,0.2)',
+            borderRadius: '3px',
+            color: 'rgba(200,169,110,0.7)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            fontFamily: "'EB Garamond', serif",
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}>New Game</button>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '16px', color: 'rgba(200,169,110,0.25)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily:"'EB Garamond', serif" }}>
+        Arrow keys · 1–9 to fill · N to toggle notes
+      </div>
     </div>
   );
-};
-
-export default SudokuMatrix;
+}
