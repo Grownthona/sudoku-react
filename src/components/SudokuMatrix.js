@@ -81,7 +81,7 @@ function createPuzzle(solution, clues) {
   return puzzle;
 }
 
-export default function Sudoku() {
+export default function SudokuMatrix() {
   const [difficulty, setDifficulty] = useState("Medium");
   const [solution, setSolution] = useState(null);
   const [puzzle, setPuzzle] = useState(null);
